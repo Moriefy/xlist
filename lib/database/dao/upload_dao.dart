@@ -11,7 +11,7 @@ abstract class UploadDao {
   Future<UploadEntity?> findUploadById(int id);
 
   @Query(
-    'SELECT * FROM upload WHERE server_id = :serverId AND path = :path AND name = :name',
+    'SELECT * FROM upload WHERE server_id = :serverId AND remote_path = :path AND name = :name',
   )
   Future<UploadEntity?> findUploadByServerIdAndPath(
       int serverId, String path, String name);
