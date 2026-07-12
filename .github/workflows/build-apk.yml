@@ -1,0 +1,104 @@
+name: Build Android APK
+
+on:
+  # 手动触发（手机上也能点）
+  workflow_dispatch:
+    inputs:
+      build_mode:
+        description: '构建模式'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+
+  # 推送到 master 分支时自动构建
+  push:
+    branches: [ master ]
+
+  # Pull Request 时构建（用于验证）
+  pull_request:
+    branches: [ master ]
+
+# 取消同分支上一次的构建
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      # 1. 拉取代码
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. 配置 JDK 17（AGP 7.3 兼容）
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3. 配置 Flutter SDK
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.2'
+          channel: 'stable'
+          cache: true
+
+      # 4. Flutter 环境信息
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      # 5. 获取依赖
+      - name: Get Dependencies
+        run: flutter pub get
+
+      # 6. 生成代码（Floor / JSON 序列化等）
+      - name: Build Runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # 7. 构建 APK
+      - name: Build APK (Release)
+        if: ${{ github.event.inputs.build_mode != 'debug' }}
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Build APK (Debug)
+        if: ${{ github.event.inputs.build_mode == 'debug' }}
+        run: flutter build apk --debug
+
+      # 8. 重命名 APK（带日期和版本）
+      - name: Rename APK
+        run: |
+          DATE=$(date +%Y%m%d)
+          if [ "${{ github.event.inputs.build_mode }}" = "debug" ]; then
+            mv build/app/outputs/flutter-apk/app-debug.apk \
+               xlist-debug-${DATE}.apk
+            echo "APK_NAME=xlist-debug-${DATE}.apk" >> $GITHUB_ENV
+          else
+            mv build/app/outputs/flutter-apk/app-release.apk \
+               xlist-release-${DATE}.apk
+            echo "APK_NAME=xlist-release-${DATE}.apk" >> $GITHUB_ENV
+          fi
+
+      # 9. 上传 APK 产物
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK_NAME }}
+          path: ${{ env.APK_NAME }}
+          retention-days: 30  # 保留 30 天
+
+      # 10. 如果是 tag 推送，自动创建 Release
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.APK_NAME }}
+          generate_release_notes: true
