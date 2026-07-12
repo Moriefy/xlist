@@ -17,6 +17,10 @@ class Global {
   static bool get isProfile => kProfileMode;
   static bool get isDebug => kDebugMode;
 
+  /// Shared file data from intent (set by method channel handler)
+  /// Splash controller reads this instead of polling the method channel.
+  static Map<String, dynamic>? pendingSharedFile;
+
   static Future<void> init() async {
     WidgetsFlutterBinding.ensureInitialized();
     HttpOverrides.global = XlistHttpOverrides();
@@ -50,31 +54,47 @@ class Global {
       SystemChrome.setSystemUIOverlayStyle(systemUiOverlayStyle);
     }
 
-    // Warm start listener: Native pushes share data to Dart
-    _setupShareIntentListener();
+    // Set up method channel handler ONCE (handles both cold and warm start)
+    _setupShareIntentHandler();
   }
 
-  static void _setupShareIntentListener() {
+  /// Single method channel handler for share intents.
+  /// Handles:
+  /// - getSharedFile: Dart polls native (cold start)
+  /// - onSharedFile: Native pushes to Dart (warm start)
+  static void _setupShareIntentHandler() {
     const channel = MethodChannel('io.xlist/share');
     channel.setMethodCallHandler((call) async {
       if (call.method == 'onSharedFile') {
+        // Warm start: native pushes shared file data
         final data = call.arguments as Map?;
-        if (data == null) return;
+        if (data != null) {
+          final filePath = data['filePath'] as String? ?? '';
+          final fileName = data['fileName'] as String? ?? '';
+          final fileSize = data['fileSize'] as int? ?? 0;
 
-        final filePath = data['filePath'] as String? ?? '';
-        final fileName = data['fileName'] as String? ?? '';
-        final fileSize = data['fileSize'] as int? ?? 0;
+          if (filePath.isNotEmpty && File(filePath).existsSync()) {
+            // Store for splash controller to read
+            pendingSharedFile = {
+              'filePath': filePath,
+              'fileName': fileName,
+              'fileSize': fileSize,
+            };
 
-        if (filePath.isNotEmpty && File(filePath).existsSync()) {
-          // App is already running, navigate directly
-          Get.offAllNamed(Routes.SHARE_UPLOAD, arguments: {
-            'filePath': filePath,
-            'fileName': fileName,
-            'fileSize': fileSize,
-            'path': '/',
-          });
+            // If app is already on homepage, navigate directly
+            if (Get.currentRoute == Routes.HOMEPAGE ||
+                Get.currentRoute == '/') {
+              Get.offAllNamed(Routes.SHARE_UPLOAD, arguments: {
+                'filePath': filePath,
+                'fileName': fileName,
+                'fileSize': fileSize,
+                'path': '/',
+              });
+            }
+          }
         }
       }
+      // getSharedFile is handled by native side, not here
     });
   }
 }
