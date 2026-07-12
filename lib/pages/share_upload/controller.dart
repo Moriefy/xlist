@@ -16,7 +16,6 @@ import 'package:xlist/repositorys/index.dart';
 import 'package:xlist/database/entity/index.dart';
 
 class ShareUploadController extends GetxController {
-  final userInfo = UserModel().obs;
   final objects = <ObjectModel>[].obs;
   final isFirstLoading = true.obs;
   final serverId = Get.find<UserStorage>().serverId.val;
@@ -26,7 +25,6 @@ class ShareUploadController extends GetxController {
   String filePath = Get.arguments?['filePath'] ?? '';
   String fileName = Get.arguments?['fileName'] ?? '';
   int fileSize = Get.arguments?['fileSize'] ?? 0;
-  String mimeType = Get.arguments?['mimeType'] ?? '';
 
   // Current directory path
   String path = Get.arguments?['path'] ?? '/';
@@ -48,17 +46,15 @@ class ShareUploadController extends GetxController {
     pageTitle = 'share_upload_title'.tr;
 
     // Get directory password
-    final passwordManager = await DatabaseService.to.database.passwordManagerDao
-        .findPasswordManagerByPath(serverId, path);
-    if (passwordManager != null && passwordManager.isNotEmpty) {
-      password = passwordManager.last.password;
-    }
-
-    // Get user info
     try {
-      userInfo.value = await UserRepository.me();
+      final passwordManager = await DatabaseService.to.database.passwordManagerDao
+          .findPasswordManagerByPath(serverId, path);
+      if (passwordManager != null && passwordManager.isNotEmpty) {
+        password = passwordManager.last.password;
+      }
     } catch (e) {}
 
+    // Load directory list (no network user info call - fast)
     await getDirectoryList();
     isFirstLoading.value = false;
   }
@@ -134,7 +130,6 @@ class ShareUploadController extends GetxController {
         'filePath': filePath,
         'fileName': fileName,
         'fileSize': fileSize,
-        'mimeType': mimeType,
       },
     );
   }
@@ -179,8 +174,8 @@ class ShareUploadController extends GetxController {
     Get.until((route) => route.isFirst);
   }
 
-  /// Cancel and go back
+  /// Cancel and go back to home
   void cancel() {
-    Get.back();
+    Get.until((route) => route.isFirst);
   }
 }
