@@ -14,11 +14,6 @@ class SplashController extends GetxController {
   static const _channel = MethodChannel('io.xlist/share');
 
   @override
-  void onInit() {
-    super.onInit();
-  }
-
-  @override
   void onReady() {
     super.onReady();
     _init();
@@ -27,27 +22,28 @@ class SplashController extends GetxController {
   Future<void> _init() async {
     if (!CommonUtils.isPad) await FijkPlugin.setOrientationPortrait();
 
-    // 布局方式
     final layoutType = Get.find<PreferencesStorage>().layoutType.val;
     if (layoutType == LayoutType.UNKNOWN) {
       Get.find<PreferencesStorage>().layoutType.val =
           CommonUtils.isPad ? LayoutType.GRID : LayoutType.LIST;
     }
 
-    // Cold start: poll native for shared file data
-    // Retry because method channel handler might not be ready immediately
+    // Cold start: poll native for shared file
+    // Native caches it before Flutter engine starts, but the method channel
+    // handler might not be fully ready, so retry multiple times.
     Map? sharedData;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 15; i++) {
       try {
         final result = await _channel.invokeMethod('getSharedFile')
             .timeout(Duration(seconds: 1));
-        if (result != null && result is Map) {
+        if (result != null && result is Map && result.containsKey('filePath')) {
           sharedData = result;
           break;
         }
-        // null = no shared file, stop
+        // null = no shared file cached, no point retrying
         break;
       } catch (e) {
+        // Timeout or MissingPluginException, retry
         await Future.delayed(Duration(milliseconds: 200));
       }
     }
@@ -58,11 +54,10 @@ class SplashController extends GetxController {
       final fileSize = sharedData['fileSize'] as int? ?? 0;
 
       if (filePath.isNotEmpty && File(filePath).existsSync()) {
-        Get.offAndToNamed(Routes.SHARE_UPLOAD, arguments: {
+        Get.offAllNamed(Routes.SHARE_UPLOAD, arguments: {
           'filePath': filePath,
           'fileName': fileName,
           'fileSize': fileSize,
-          'mimeType': '',
           'path': '/',
         });
         return;
@@ -70,6 +65,6 @@ class SplashController extends GetxController {
     }
 
     // No shared file, go to homepage
-    Get.offAndToNamed(Routes.HOMEPAGE);
+    Get.offAllNamed(Routes.HOMEPAGE);
   }
 }
