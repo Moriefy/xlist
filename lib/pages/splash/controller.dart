@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:get/get.dart';
 import 'package:fijkplayer/fijkplayer.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:flutter/services.dart';
 
 import 'package:xlist/common/index.dart';
 import 'package:xlist/storages/index.dart';
@@ -11,6 +11,8 @@ import 'package:xlist/constants/index.dart';
 import 'package:xlist/routes/app_pages.dart';
 
 class SplashController extends GetxController {
+  static const _channel = MethodChannel('io.xlist/share');
+
   @override
   void onInit() {
     super.onInit();
@@ -36,21 +38,22 @@ class SplashController extends GetxController {
 
     // 检查是否有分享 Intent
     try {
-      final sharedFiles = await ReceiveSharingIntent.getInitialMedia();
-      if (sharedFiles.isNotEmpty) {
-        final file = sharedFiles.first;
-        final filePath = file.path;
-        final fileName = filePath.split(Platform.pathSeparator).last;
-        final fileSize = File(filePath).lengthSync();
+      final result = await _channel.invokeMethod('getSharedFile');
+      if (result != null && result is Map) {
+        final filePath = result['filePath'] as String? ?? '';
+        final fileName = result['fileName'] as String? ?? '';
+        final fileSize = result['fileSize'] as int? ?? 0;
 
-        Get.offAndToNamed(Routes.SHARE_UPLOAD, arguments: {
-          'filePath': filePath,
-          'fileName': fileName,
-          'fileSize': fileSize,
-          'mimeType': '',
-          'path': '/',
-        });
-        return;
+        if (filePath.isNotEmpty && File(filePath).existsSync()) {
+          Get.offAndToNamed(Routes.SHARE_UPLOAD, arguments: {
+            'filePath': filePath,
+            'fileName': fileName,
+            'fileSize': fileSize,
+            'mimeType': '',
+            'path': '/',
+          });
+          return;
+        }
       }
     } catch (e) {
       // No share intent, continue normally
