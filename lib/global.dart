@@ -12,29 +12,20 @@ import 'package:xlist/storages/index.dart';
 import 'package:xlist/constants/index.dart';
 import 'package:xlist/routes/app_pages.dart';
 
-// 全局配置
 class Global {
   static bool get isRelease => kReleaseMode;
   static bool get isProfile => kProfileMode;
   static bool get isDebug => kDebugMode;
 
-  // 运行初始化
   static Future<void> init() async {
-    // Init FlutterBinding
     WidgetsFlutterBinding.ensureInitialized();
-
-    // HttpOverrides
     HttpOverrides.global = XlistHttpOverrides();
-
-    // GetStorage
     await GetStorage.init();
 
-    // Storage
     await Get.put(CommonStorage());
     await Get.putAsync(() => UserStorage().init());
     await Get.putAsync(() => PreferencesStorage().init());
 
-    // Init Getx Service
     await Get.put(BrowserService());
     await Get.putAsync(() => DioService().init());
     await Get.putAsync(() => DatabaseService().init());
@@ -43,52 +34,45 @@ class Global {
     await Get.putAsync(() => PlayerNotificationService().init());
     await Get.putAsync(() => UploadService().init());
 
-    // 读取设备第一次打开
     final isFirstOpen = Get.find<PreferencesStorage>().isFirstOpen;
     if (isFirstOpen.val == true) {
       isFirstOpen.val = false;
-
-      // IOS 请求联网弹窗
       try {
         if (GetPlatform.isIOS) DioService.to.dio.get('https://xlist.site');
       } catch (e) {}
     }
 
-    // Theme
     Get.changeThemeMode(ThemeModeMap[Get.find<CommonStorage>().themeMode.val]!);
 
-    // android 状态栏为透明的沉浸
     if (GetPlatform.isAndroid) {
       SystemUiOverlayStyle systemUiOverlayStyle =
           const SystemUiOverlayStyle(statusBarColor: Colors.transparent);
       SystemChrome.setSystemUIOverlayStyle(systemUiOverlayStyle);
     }
 
-    // Listen for share intents (warm start: app already running)
+    // Warm start listener: Native pushes share data to Dart
     _setupShareIntentListener();
   }
 
-  /// Set up listener for Native → Dart share intent (warm start)
   static void _setupShareIntentListener() {
     const channel = MethodChannel('io.xlist/share');
     channel.setMethodCallHandler((call) async {
       if (call.method == 'onSharedFile') {
         final data = call.arguments as Map?;
-        if (data != null) {
-          final filePath = data['filePath'] as String? ?? '';
-          final fileName = data['fileName'] as String? ?? '';
-          final fileSize = data['fileSize'] as int? ?? 0;
+        if (data == null) return;
 
-          if (filePath.isNotEmpty && File(filePath).existsSync()) {
-            // Navigate to share upload page
-            Get.offAndToNamed(Routes.SHARE_UPLOAD, arguments: {
-              'filePath': filePath,
-              'fileName': fileName,
-              'fileSize': fileSize,
-              'mimeType': '',
-              'path': '/',
-            });
-          }
+        final filePath = data['filePath'] as String? ?? '';
+        final fileName = data['fileName'] as String? ?? '';
+        final fileSize = data['fileSize'] as int? ?? 0;
+
+        if (filePath.isNotEmpty && File(filePath).existsSync()) {
+          // App is already running, navigate directly
+          Get.offAllNamed(Routes.SHARE_UPLOAD, arguments: {
+            'filePath': filePath,
+            'fileName': fileName,
+            'fileSize': fileSize,
+            'path': '/',
+          });
         }
       }
     });
@@ -98,10 +82,8 @@ class Global {
 class XlistHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
-    // allowLegacyUnsafeRenegotiation
     final SecurityContext sc = SecurityContext();
     sc.allowLegacyUnsafeRenegotiation = true;
-
     return super.createHttpClient(sc)
       ..badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;
