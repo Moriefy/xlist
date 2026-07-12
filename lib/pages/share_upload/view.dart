@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:easy_refresh/easy_refresh.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:adaptive_dialog/adaptive_dialog.dart';
@@ -100,7 +99,7 @@ class ShareUploadPage extends GetView<ShareUploadController> {
     );
   }
 
-  /// SliverList — GestureDetector is INSIDE Slidable (same as DirectoryPage)
+  /// SliverList — NO Slidable, just GestureDetector (same as DirectoryPage)
   Widget _buildSliverList() {
     if (controller.isFirstLoading.isTrue) {
       return SliverToBoxAdapter(
@@ -131,26 +130,37 @@ class ShareUploadPage extends GetView<ShareUploadController> {
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) => FrameSeparateWidget(
           index: index,
-          child: Slidable(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () =>
-                  controller.enterDirectory(controller.objects[index]),
-              child: Column(
-                children: [
-                  ObjectListItem(
-                    object: controller.objects[index],
-                    isShowPreview: false,
-                  ),
-                  CommonUtils.isPad
-                      ? Divider(height: 1.r, indent: 90, endIndent: 10)
-                      : Container(
-                          padding: EdgeInsets.only(top: 20.r),
-                          child: Divider(
-                              height: 1.r, indent: 190.r, endIndent: 15.r),
-                        ),
-                ],
-              ),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              final object = controller.objects[index];
+              final path =
+                  '${controller.path == '/' ? '' : controller.path}/${object.name}';
+              Get.toNamed(
+                Routes.SHARE_UPLOAD,
+                arguments: {
+                  'path': path,
+                  'object': object,
+                  'filePath': controller.filePath,
+                  'fileName': controller.fileName,
+                  'fileSize': controller.fileSize,
+                },
+              );
+            },
+            child: Column(
+              children: [
+                ObjectListItem(
+                  object: controller.objects[index],
+                  isShowPreview: false,
+                ),
+                CommonUtils.isPad
+                    ? Divider(height: 1.r, indent: 90, endIndent: 10)
+                    : Container(
+                        padding: EdgeInsets.only(top: 20.r),
+                        child: Divider(
+                            height: 1.r, indent: 190.r, endIndent: 15.r),
+                      ),
+              ],
             ),
           ),
         ),
@@ -183,9 +193,10 @@ class ShareUploadPage extends GetView<ShareUploadController> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: _buildNavigationBar(),
-      body: SafeArea(
+    return CupertinoPageScaffold(
+      navigationBar: _buildNavigationBar(),
+      backgroundColor: CommonUtils.backgroundColor,
+      child: SafeArea(
         child: EasyRefresh(
           controller: controller.easyRefreshController,
           header: CupertinoHeader(
@@ -209,13 +220,6 @@ class ShareUploadPage extends GetView<ShareUploadController> {
             border: Border(
               top: BorderSide(width: 1.r, color: Get.theme.dividerColor),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: Offset(0, -2),
-              ),
-            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
