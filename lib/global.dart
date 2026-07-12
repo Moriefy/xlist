@@ -10,6 +10,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:xlist/services/index.dart';
 import 'package:xlist/storages/index.dart';
 import 'package:xlist/constants/index.dart';
+import 'package:xlist/routes/app_pages.dart';
 
 // 全局配置
 class Global {
@@ -62,6 +63,35 @@ class Global {
           const SystemUiOverlayStyle(statusBarColor: Colors.transparent);
       SystemChrome.setSystemUIOverlayStyle(systemUiOverlayStyle);
     }
+
+    // Listen for share intents (warm start: app already running)
+    _setupShareIntentListener();
+  }
+
+  /// Set up listener for Native → Dart share intent (warm start)
+  static void _setupShareIntentListener() {
+    const channel = MethodChannel('io.xlist/share');
+    channel.setMethodCallHandler((call) async {
+      if (call.method == 'onSharedFile') {
+        final data = call.arguments as Map?;
+        if (data != null) {
+          final filePath = data['filePath'] as String? ?? '';
+          final fileName = data['fileName'] as String? ?? '';
+          final fileSize = data['fileSize'] as int? ?? 0;
+
+          if (filePath.isNotEmpty && File(filePath).existsSync()) {
+            // Navigate to share upload page
+            Get.offAndToNamed(Routes.SHARE_UPLOAD, arguments: {
+              'filePath': filePath,
+              'fileName': fileName,
+              'fileSize': fileSize,
+              'mimeType': '',
+              'path': '/',
+            });
+          }
+        }
+      }
+    });
   }
 }
 
