@@ -22,8 +22,8 @@ class SplashController extends GetxController {
   void onReady() {
     super.onReady();
 
-    // Jump to LandingPage after 10ms
-    Timer(const Duration(milliseconds: 10), () => complete());
+    // Wait for engine and method channel to be ready
+    Timer(const Duration(milliseconds: 500), () => complete());
   }
 
   void complete() async {
