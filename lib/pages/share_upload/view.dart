@@ -137,7 +137,7 @@ class ShareUploadPage extends GetView<ShareUploadController> {
               children: [
                 ObjectListItem(
                   object: controller.objects[index],
-                  isShowPreview: controller.isShowPreview.value,
+                  isShowPreview: false, // No preview needed in share upload
                 ),
                 CommonUtils.isPad
                     ? Divider(height: 1.r, indent: 90, endIndent: 10)
@@ -177,6 +177,8 @@ class ShareUploadPage extends GetView<ShareUploadController> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: _buildNavigationBar(),
       body: SafeArea(
@@ -253,16 +255,21 @@ class ShareUploadPage extends GetView<ShareUploadController> {
               // Buttons row
               Row(
                 children: [
-                  // Cancel button
+                  // Cancel button - clear style with proper contrast
                   Expanded(
                     child: CupertinoButton(
                       padding: EdgeInsets.symmetric(vertical: 20.h),
-                      color: CupertinoColors.systemGrey5,
+                      color: isDark
+                          ? CupertinoColors.systemGrey4
+                          : CupertinoColors.systemGrey6,
                       borderRadius: BorderRadius.circular(25.r),
                       child: Text(
                         'cancel'.tr,
                         style: Get.textTheme.titleMedium?.copyWith(
-                          color: CupertinoColors.label,
+                          color: isDark
+                              ? CupertinoColors.white
+                              : CupertinoColors.black,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       onPressed: () => controller.cancel(),
