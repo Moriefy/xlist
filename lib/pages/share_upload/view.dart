@@ -99,7 +99,7 @@ class ShareUploadPage extends GetView<ShareUploadController> {
     );
   }
 
-  /// SliverList
+  /// SliverList — GestureDetector is INSIDE Slidable (same as DirectoryPage)
   Widget _buildSliverList() {
     if (controller.isFirstLoading.isTrue) {
       return SliverToBoxAdapter(
@@ -130,23 +130,26 @@ class ShareUploadPage extends GetView<ShareUploadController> {
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) => FrameSeparateWidget(
           index: index,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => controller.enterDirectory(controller.objects[index]),
-            child: Column(
-              children: [
-                ObjectListItem(
-                  object: controller.objects[index],
-                  isShowPreview: false, // No preview needed in share upload
-                ),
-                CommonUtils.isPad
-                    ? Divider(height: 1.r, indent: 90, endIndent: 10)
-                    : Container(
-                        padding: EdgeInsets.only(top: 20.r),
-                        child: Divider(
-                            height: 1.r, indent: 190.r, endIndent: 15.r),
-                      ),
-              ],
+          child: Slidable(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () =>
+                  controller.enterDirectory(controller.objects[index]),
+              child: Column(
+                children: [
+                  ObjectListItem(
+                    object: controller.objects[index],
+                    isShowPreview: false,
+                  ),
+                  CommonUtils.isPad
+                      ? Divider(height: 1.r, indent: 90, endIndent: 10)
+                      : Container(
+                          padding: EdgeInsets.only(top: 20.r),
+                          child: Divider(
+                              height: 1.r, indent: 190.r, endIndent: 15.r),
+                        ),
+                ],
+              ),
             ),
           ),
         ),
@@ -165,8 +168,8 @@ class ShareUploadPage extends GetView<ShareUploadController> {
         SliverToBoxAdapter(child: _buildPathIndicator()),
         Obx(
           () => SliverPadding(
-            padding:
-                EdgeInsets.symmetric(horizontal: CommonUtils.isPad ? 15 : 30.r),
+            padding: EdgeInsets.symmetric(
+                horizontal: CommonUtils.isPad ? 15 : 30.r),
             sliver: SizeCacheWidget(child: _buildSliverList()),
           ),
         ),
@@ -255,7 +258,7 @@ class ShareUploadPage extends GetView<ShareUploadController> {
               // Buttons row
               Row(
                 children: [
-                  // Cancel button - clear style with proper contrast
+                  // Cancel button
                   Expanded(
                     child: CupertinoButton(
                       padding: EdgeInsets.symmetric(vertical: 20.h),
