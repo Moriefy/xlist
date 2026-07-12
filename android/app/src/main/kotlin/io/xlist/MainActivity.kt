@@ -16,11 +16,10 @@ class MainActivity: AudioServiceActivity() {
     private var sharedFileSize: Long = 0
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-        super.configureFlutterEngine(flutterEngine)
-
-        // Handle initial share intent
+        // Handle share intent BEFORE starting Flutter engine
         handleShareIntent(intent)
 
+        // Register method channel BEFORE super (so it's ready when Dart calls)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "getSharedFile" -> {
@@ -41,6 +40,8 @@ class MainActivity: AudioServiceActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        super.configureFlutterEngine(flutterEngine)
     }
 
     override fun onNewIntent(intent: Intent) {
