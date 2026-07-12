@@ -96,10 +96,19 @@ class DirectoryPage extends GetView<DirectoryController> {
         overflow: TextOverflow.ellipsis,
       ),
       trailing: Container(
-        width: 270.w,
+        width: 380.w,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              alignment: Alignment.centerRight,
+              child: Icon(
+                CupertinoIcons.arrow_down_circle,
+                size: CommonUtils.navIconSize,
+              ),
+              onPressed: () => Get.toNamed(Routes.SETTING_DOWNLOAD),
+            ),
             Obx(() => _buildPullDownButton()),
             SizedBox(width: 15.w),
             CupertinoButton(
