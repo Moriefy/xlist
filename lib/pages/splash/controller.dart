@@ -47,7 +47,7 @@ class SplashController extends GetxController {
           'filePath': filePath,
           'fileName': fileName,
           'fileSize': fileSize,
-          'mimeType': file.type?.toString() ?? '',
+          'mimeType': '',
           'path': '/',
         });
         return;

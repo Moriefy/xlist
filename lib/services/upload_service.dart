@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart' as dio_lib;
 import 'package:get/get.dart' hide Response;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
@@ -23,7 +23,7 @@ typedef UploadProgressCallback = void Function(int id, int progress, int status)
 class UploadService extends GetxService {
   static UploadService get to => Get.find();
 
-  final _cancelTokens = <int, CancelToken>{};
+  final _cancelTokens = <int, dio_lib.CancelToken>{};
   final _callbacks = <UploadProgressCallback>[];
   bool _processing = false;
 
@@ -100,7 +100,7 @@ class UploadService extends GetxService {
 
   /// Execute a single upload
   Future<void> _doUpload(UploadEntity entity) async {
-    final cancelToken = CancelToken();
+    final cancelToken = dio_lib.CancelToken();
     _cancelTokens[entity.id!] = cancelToken;
 
     // Update status to uploading
@@ -123,7 +123,7 @@ class UploadService extends GetxService {
       await DioService.to.dio.put(
         '${url}/api/fs/put',
         cancelToken: cancelToken,
-        options: Options(
+        options: dio_lib.Options(
           contentType: 'multipart/form-data',
           headers: {
             'File-Path': Uri.encodeComponent('${entity.remotePath}/${entity.name}'),
@@ -132,7 +132,7 @@ class UploadService extends GetxService {
             'Authorization': token,
           },
         ),
-        data: MultipartFile.fromBytes(fileData).finalize(),
+        data: dio_lib.MultipartFile.fromBytes(fileData).finalize(),
         onSendProgress: (sent, total) {
           if (total > 0) {
             final progress = (sent * 100 ~/ total);
@@ -145,8 +145,8 @@ class UploadService extends GetxService {
       // Completed
       await _updateEntity(entity, status: UploadStatus.COMPLETED, progress: 100);
       _notify(entity.id!, 100, UploadStatus.COMPLETED);
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.cancel) {
+    } on dio_lib.DioException catch (e) {
+      if (e.type == dio_lib.DioExceptionType.cancel) {
         // Cancelled - check if paused or cancelled
         final current = await DatabaseService.to.database.uploadDao.findUploadById(entity.id!);
         if (current != null && current.status == UploadStatus.PAUSED) {
@@ -174,13 +174,13 @@ class UploadService extends GetxService {
     if (cancelToken != null && !cancelToken.isCancelled) {
       cancelToken.cancel('paused');
     }
-    await _updateEntityById(id, status: UploadStatus.PAUSED);
+    await _updateEntityById(id: id, status: UploadStatus.PAUSED);
     _notify(id, 0, UploadStatus.PAUSED);
   }
 
   /// Resume a paused upload
   Future<void> resume(int id) async {
-    await _updateEntityById(id, status: UploadStatus.QUEUED);
+    await _updateEntityById(id: id, status: UploadStatus.QUEUED);
     _notify(id, 0, UploadStatus.QUEUED);
     _processQueue();
   }
@@ -191,7 +191,7 @@ class UploadService extends GetxService {
     if (cancelToken != null && !cancelToken.isCancelled) {
       cancelToken.cancel('cancelled');
     }
-    await _updateEntityById(id, status: UploadStatus.CANCELLED);
+    await _updateEntityById(id: id, status: UploadStatus.CANCELLED);
     _notify(id, 0, UploadStatus.CANCELLED);
   }
 
@@ -203,7 +203,7 @@ class UploadService extends GetxService {
 
   /// Retry a failed upload
   Future<void> retry(int id) async {
-    await _updateEntityById(id, status: UploadStatus.QUEUED, progress: 0);
+    await _updateEntityById(id: id, status: UploadStatus.QUEUED, progress: 0);
     _notify(id, 0, UploadStatus.QUEUED);
     _processQueue();
   }

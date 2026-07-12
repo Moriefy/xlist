@@ -9,6 +9,7 @@ import 'package:xlist/gen/index.dart';
 import 'package:xlist/common/index.dart';
 import 'package:xlist/constants/index.dart';
 import 'package:xlist/services/upload_service.dart';
+import 'package:xlist/database/entity/index.dart';
 import 'package:xlist/pages/setting/upload/index.dart';
 
 class UploadPage extends GetView<UploadController> {

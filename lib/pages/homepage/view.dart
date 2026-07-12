@@ -54,7 +54,7 @@ class Homepage extends GetView<HomepageController> {
               padding: EdgeInsets.zero,
               alignment: Alignment.centerRight,
               child: Icon(
-                CupertinoIcons.down_arrow_circle,
+                CupertinoIcons.arrow_down_circle,
                 size: CommonUtils.navIconSize,
               ),
               onPressed: () => Get.toNamed(Routes.SETTING_DOWNLOAD),
