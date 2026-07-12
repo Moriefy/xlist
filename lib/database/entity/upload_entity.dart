@@ -3,7 +3,7 @@ import 'package:floor/floor.dart';
 @Entity(
   tableName: 'upload',
   indices: [
-    Index(value: ['server_id', 'path', 'name'], unique: true),
+    Index(value: ['server_id', 'remote_path', 'name'], unique: true),
   ],
 )
 class UploadEntity {
@@ -29,10 +29,10 @@ class UploadEntity {
   final int size;
 
   @ColumnInfo(name: 'status')
-  final int status; // 0=queued, 1=uploading, 2=paused, 3=completed, 4=failed, 5=cancelled
+  final int status;
 
   @ColumnInfo(name: 'progress')
-  final int progress; // 0-100
+  final int progress;
 
   @ColumnInfo(name: 'password')
   final String password;
@@ -51,9 +51,9 @@ class UploadEntity {
     required this.name,
     required this.type,
     required this.size,
-    this.status = 0,
-    this.progress = 0,
-    this.password = '',
+    required this.status,
+    required this.progress,
+    required this.password,
     required this.createdAt,
     required this.updatedAt,
   });

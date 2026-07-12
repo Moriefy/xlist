@@ -68,6 +68,8 @@ class UploadService extends GetxService {
       name: name,
       type: type,
       size: size,
+      status: UploadStatus.QUEUED,
+      progress: 0,
       password: password,
       createdAt: now,
       updatedAt: now,
