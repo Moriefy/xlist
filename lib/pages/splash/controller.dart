@@ -34,25 +34,24 @@ class SplashController extends GetxController {
           CommonUtils.isPad ? LayoutType.GRID : LayoutType.LIST;
     }
 
-    // Wait for engine to be ready with retry
+    // Cold start: poll native for shared file data
+    // Retry because method channel handler might not be ready immediately
     Map? sharedData;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
       try {
         final result = await _channel.invokeMethod('getSharedFile')
-            .timeout(Duration(seconds: 2));
+            .timeout(Duration(seconds: 1));
         if (result != null && result is Map) {
           sharedData = result;
           break;
         }
-        // null means no shared file, stop retrying
+        // null = no shared file, stop
         break;
       } catch (e) {
-        // Timeout or error, retry after delay
-        await Future.delayed(Duration(milliseconds: 300));
+        await Future.delayed(Duration(milliseconds: 200));
       }
     }
 
-    // Check if we got shared file data
     if (sharedData != null) {
       final filePath = sharedData['filePath'] as String? ?? '';
       final fileName = sharedData['fileName'] as String? ?? '';
