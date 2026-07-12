@@ -10,6 +10,7 @@ import 'package:xlist/common/index.dart';
 import 'package:xlist/helper/index.dart';
 import 'package:xlist/constants/index.dart';
 import 'package:xlist/components/index.dart';
+import 'package:xlist/routes/app_pages.dart';
 import 'package:xlist/pages/detail/index.dart';
 
 class DetailPage extends StatelessWidget {
@@ -34,11 +35,25 @@ class DetailPage extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       trailing: Obx(
-        () => ButtonHelper.createPullDownButton(
-          controller: controller,
-          path: '${controller.path}${controller.name}',
-          source: PageSource.DETAIL,
-          pageTag: tag ?? '',
+        () => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              alignment: Alignment.centerRight,
+              child: Icon(
+                CupertinoIcons.arrow_down_circle,
+                size: CommonUtils.navIconSize,
+              ),
+              onPressed: () => Get.toNamed(Routes.SETTING_DOWNLOAD),
+            ),
+            ButtonHelper.createPullDownButton(
+              controller: controller,
+              path: '${controller.path}${controller.name}',
+              source: PageSource.DETAIL,
+              pageTag: tag ?? '',
+            ),
+          ],
         ),
       ),
     );
