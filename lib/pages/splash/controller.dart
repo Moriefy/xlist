@@ -6,6 +6,7 @@ import 'package:fijkplayer/fijkplayer.dart';
 import 'package:flutter/services.dart';
 
 import 'package:xlist/common/index.dart';
+import 'package:xlist/global.dart';
 import 'package:xlist/storages/index.dart';
 import 'package:xlist/constants/index.dart';
 import 'package:xlist/routes/app_pages.dart';
