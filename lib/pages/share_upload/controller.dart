@@ -19,9 +19,9 @@ class ShareUploadController extends GetxController {
   final objects = <ObjectModel>[].obs;
   final isFirstLoading = true.obs;
   final serverId = Get.find<UserStorage>().serverId.val;
-  final isShowPreview = Get.find<PreferencesStorage>().isShowPreview.val.obs;
+  final isShowPreview = false.obs;
 
-  // Shared file info from arguments
+  // Shared file info
   String filePath = Get.arguments?['filePath'] ?? '';
   String fileName = Get.arguments?['fileName'] ?? '';
   int fileSize = Get.arguments?['fileSize'] ?? 0;
@@ -29,7 +29,6 @@ class ShareUploadController extends GetxController {
   // Current directory path
   String path = Get.arguments?['path'] ?? '/';
 
-  // ScrollController
   final ScrollController scrollController = ScrollController();
   EasyRefreshController easyRefreshController = EasyRefreshController(
     controlFinishRefresh: true,
@@ -42,10 +41,8 @@ class ShareUploadController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-
     pageTitle = 'share_upload_title'.tr;
 
-    // Get directory password
     try {
       final passwordManager = await DatabaseService.to.database.passwordManagerDao
           .findPasswordManagerByPath(serverId, path);
@@ -54,7 +51,6 @@ class ShareUploadController extends GetxController {
       }
     } catch (e) {}
 
-    // Load directory list (no network user info call - fast)
     await getDirectoryList();
     isFirstLoading.value = false;
   }
@@ -80,11 +76,9 @@ class ShareUploadController extends GetxController {
           Get.back();
           return;
         }
-
         await DatabaseService.to.database.passwordManagerDao
             .insertPasswordManager(PasswordManagerEntity(
                 serverId: serverId, path: path, password: text.first));
-
         password = text.first;
         await getDirectoryList();
         return;
@@ -103,19 +97,14 @@ class ShareUploadController extends GetxController {
     final List<FsDirsModel> dirs = [];
     final data = response['data'] ?? [];
     data.map((d) => dirs.add(FsDirsModel.fromJson(d))).toList();
-
     return dirs
-        .map(
-          (d) => ObjectModel.fromJson(
-            {
+        .map((d) => ObjectModel.fromJson({
               'name': d.name,
               'is_dir': true,
               'type': FileType.FOLDER,
               'size': 0,
               'modified': d.modified?.toIso8601String(),
-            },
-          ),
-        )
+            }))
         .toList();
   }
 
@@ -147,7 +136,6 @@ class ShareUploadController extends GetxController {
       return;
     }
 
-    // Determine file type
     int fileType = FileType.UNKNOWN;
     if (PreviewHelper.isImage(fileName)) {
       fileType = FileType.IMAGE;
@@ -157,7 +145,6 @@ class ShareUploadController extends GetxController {
       fileType = FileType.AUDIO;
     }
 
-    // Add to upload queue
     await UploadService.to.enqueue(
       serverId: serverId,
       localPath: filePath,
@@ -169,13 +156,17 @@ class ShareUploadController extends GetxController {
     );
 
     SmartDialog.showToast('toast_upload_added'.tr);
-
-    // Go back to home
-    Get.until((route) => route.isFirst);
+    // Go to homepage
+    Get.offAllNamed(Routes.HOMEPAGE);
   }
 
-  /// Cancel and go back to home
+  /// Cancel — go to homepage (or close if it's the only route)
   void cancel() {
-    Get.until((route) => route.isFirst);
+    if (Get.routing.current == Routes.SHARE_UPLOAD) {
+      // We're on share upload, go to homepage
+      Get.offAllNamed(Routes.HOMEPAGE);
+    } else {
+      Get.back();
+    }
   }
 }
