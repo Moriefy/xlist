@@ -98,7 +98,7 @@ class UploadService extends GetxService {
     _processing = false;
   }
 
-  /// Execute a single upload
+  /// Execute a single upload using stream for real progress tracking
   Future<void> _doUpload(UploadEntity entity) async {
     final cancelToken = dio_lib.CancelToken();
     _cancelTokens[entity.id!] = cancelToken;
@@ -116,26 +116,29 @@ class UploadService extends GetxService {
         return;
       }
 
-      final fileData = await file.readAsBytes();
+      final fileLength = await file.length();
       final url = Get.find<UserStorage>().serverUrl.val;
       final token = Get.find<UserStorage>().token.val;
+
+      // Use stream body for REAL progress tracking
+      // Dio's onSendProgress only reports accurately with stream bodies
+      final fileStream = file.openRead();
 
       await DioService.to.dio.put(
         '${url}/api/fs/put',
         cancelToken: cancelToken,
         options: dio_lib.Options(
-          contentType: 'multipart/form-data',
           headers: {
             'File-Path': Uri.encodeComponent('${entity.remotePath}/${entity.name}'),
             'Password': entity.password,
-            'Content-Length': fileData.length,
+            'Content-Length': fileLength,
             'Authorization': token,
           },
         ),
-        data: dio_lib.MultipartFile.fromBytes(fileData).finalize(),
+        data: fileStream,
         onSendProgress: (sent, total) {
-          if (total > 0) {
-            final progress = (sent * 100 ~/ total);
+          if (fileLength > 0) {
+            final progress = (sent * 100 ~/ fileLength).clamp(0, 100);
             _updateEntityProgress(entity.id!, progress);
             _notify(entity.id!, progress, UploadStatus.UPLOADING);
           }
@@ -150,7 +153,6 @@ class UploadService extends GetxService {
         // Cancelled - check if paused or cancelled
         final current = await DatabaseService.to.database.uploadDao.findUploadById(entity.id!);
         if (current != null && current.status == UploadStatus.PAUSED) {
-          // Keep paused state
           _notify(entity.id!, current.progress, UploadStatus.PAUSED);
         } else {
           await _updateEntity(entity, status: UploadStatus.CANCELLED);
