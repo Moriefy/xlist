@@ -73,6 +73,7 @@ const Map<String, String> en_US = {
   'toast_switch_success': 'Switch success',
   'toast_upload_success': 'Upload success',
   'toast_upload_loading': 'Uploading...',
+  'toast_upload_added': 'Added to upload queue',
   'toast_download_unfinished': 'Download unfinished',
   'toast_get_user_info_fail': 'Get user info failed',
   'toast_current_play_file': 'Current play file',
@@ -195,6 +196,23 @@ const Map<String, String> en_US = {
   'fijkplayer_next': 'Next',
   'fijkplayer_buffering': 'Buffering...',
   'fijkplayer_retry': 'Click to retry',
+
+  // Share Upload
+  'share_upload_title': 'Choose Upload Location',
+  'share_upload_button': 'Upload Here',
+  'share_upload_no_file': 'No file selected',
+  'share_upload_file_not_found': 'File not found',
+
+  // Upload Manager
+  'upload_manager': 'Upload Manager',
+  'upload_queued': 'Queued',
+  'upload_completed': 'Completed',
+  'upload_cancelled': 'Cancelled',
+  'upload_retry': 'Retry',
+  'setting_upload_empty': 'No upload tasks',
+  'setting_upload_clear': 'Clear Finished',
+  'setting_upload_total': 'Total',
+  'setting_upload_manager_file': ' tasks, swipe to manage',
 
   // Error
   'no_data': 'No data',

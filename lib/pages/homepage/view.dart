@@ -46,11 +46,27 @@ class Homepage extends GetView<HomepageController> {
         style: TextStyle(color: Get.theme.textTheme.bodyLarge?.color),
       ),
       trailing: Obx(
-        () => ButtonHelper.createPullDownButton(
-          controller: controller,
-          path: '/',
-          source: PageSource.HOMEPAGE,
-          pageTag: tag ?? '',
+        () => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 下载管理按钮
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              alignment: Alignment.centerRight,
+              child: Icon(
+                CupertinoIcons.down_arrow_circle,
+                size: CommonUtils.navIconSize,
+              ),
+              onPressed: () => Get.toNamed(Routes.SETTING_DOWNLOAD),
+            ),
+            // 三点菜单
+            ButtonHelper.createPullDownButton(
+              controller: controller,
+              path: '/',
+              source: PageSource.HOMEPAGE,
+              pageTag: tag ?? '',
+            ),
+          ],
         ),
       ),
     );

@@ -18,6 +18,7 @@ import 'package:xlist/pages/detail/index.dart';
 import 'package:xlist/pages/homepage/index.dart';
 import 'package:xlist/pages/directory/index.dart';
 import 'package:xlist/helper/preview_helper.dart';
+import 'package:xlist/services/upload_service.dart';
 
 class ObjectHelper {
   /// 文件点击事件
@@ -361,7 +362,7 @@ class ObjectHelper {
     String password = '',
   }) async {
     XFile? pickedFile;
-    final ImagePicker picker = ImagePicker(); // 图片选择器
+    final ImagePicker picker = ImagePicker();
 
     if (type == FileType.IMAGE)
       pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -369,38 +370,29 @@ class ObjectHelper {
       pickedFile = await picker.pickVideo(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      try {
-        SmartDialog.showLoading(msg: 'toast_upload_loading'.tr);
+      // 文件名称
+      final fileName = DateTime.now().millisecondsSinceEpoch.toString() +
+          p.extension(pickedFile.name);
 
-        // 文件名称
-        final fileName = DateTime.now().millisecondsSinceEpoch.toString() +
-            p.extension(pickedFile.name);
+      final file = File(pickedFile.path);
+      final fileSize = await file.length();
+      final serverId = Get.find<UserStorage>().serverId.val;
 
-        // 上传文件
-        final response = await ObjectRepository.put(
-          fileData: File(pickedFile.path).readAsBytesSync(),
-          fileName: fileName,
-          remotePath: path,
-          password: password,
-        );
+      // 添加到上传队列
+      await UploadService.to.enqueue(
+        serverId: serverId,
+        localPath: pickedFile.path,
+        remotePath: path,
+        name: fileName,
+        type: type,
+        size: fileSize,
+        password: password,
+      );
 
-        // 错误处理
-        if (response['code'] != HttpStatus.ok) {
-          throw response['message'];
-        }
+      SmartDialog.showToast('toast_upload_added'.tr);
 
-        SmartDialog.dismiss();
-        SmartDialog.showToast('toast_upload_success'.tr);
-
-        // 刷新列表
-        refreshObjectList(source: source, pageTag: pageTag, refresh: true);
-      } catch (e) {
-        SmartDialog.dismiss();
-        print(e);
-        SmartDialog.showToast(e.toString());
-      }
-    } else {
-      // User canceled the picker
+      // 刷新列表
+      refreshObjectList(source: source, pageTag: pageTag, refresh: true);
     }
   }
 
@@ -414,34 +406,32 @@ class ObjectHelper {
   }) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
     if (result != null) {
-      try {
-        SmartDialog.showLoading(msg: 'toast_upload_loading'.tr);
+      final file = File(result.files.single.path!);
+      final fileSize = await file.length();
+      final serverId = Get.find<UserStorage>().serverId.val;
 
-        // 上传文件
-        final response = await ObjectRepository.put(
-          fileData: File(result.files.single.path!).readAsBytesSync(),
-          fileName: result.files.single.name,
-          remotePath: path,
-          password: password,
-        );
+      // 判断文件类型
+      final fileName = result.files.single.name;
+      int fileType = FileType.UNKNOWN;
+      if (PreviewHelper.isImage(fileName)) fileType = FileType.IMAGE;
+      else if (PreviewHelper.isVideo(fileName)) fileType = FileType.VIDEO;
+      else if (PreviewHelper.isAudio(fileName)) fileType = FileType.AUDIO;
 
-        // 错误处理
-        if (response['code'] != HttpStatus.ok) {
-          throw response['message'];
-        }
+      // 添加到上传队列
+      await UploadService.to.enqueue(
+        serverId: serverId,
+        localPath: result.files.single.path!,
+        remotePath: path,
+        name: fileName,
+        type: fileType,
+        size: fileSize,
+        password: password,
+      );
 
-        SmartDialog.dismiss();
-        SmartDialog.showToast('toast_upload_success'.tr);
+      SmartDialog.showToast('toast_upload_added'.tr);
 
-        // 刷新列表
-        refreshObjectList(source: source, pageTag: pageTag, refresh: true);
-      } catch (e) {
-        SmartDialog.dismiss();
-        print(e);
-        SmartDialog.showToast(e.toString());
-      }
-    } else {
-      // User canceled the picker
+      // 刷新列表
+      refreshObjectList(source: source, pageTag: pageTag, refresh: true);
     }
   }
 }

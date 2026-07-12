@@ -18,6 +18,8 @@ import 'package:xlist/pages/setting/server/index.dart';
 import 'package:xlist/pages/setting/preview/index.dart';
 import 'package:xlist/pages/setting/favorite/index.dart';
 import 'package:xlist/pages/setting/download/index.dart';
+import 'package:xlist/pages/setting/upload/index.dart';
+import 'package:xlist/pages/share_upload/index.dart';
 
 import 'package:xlist/routes/middlewares/auth_middleware.dart';
 part 'app_routes.dart';
@@ -90,6 +92,12 @@ class AppPages {
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
+      name: _Paths.SHARE_UPLOAD,
+      page: () => ShareUploadPage(),
+      binding: ShareUploadBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
       name: _Paths.SETTING,
       page: () => SettingPage(),
       binding: SettingBinding(),
@@ -103,6 +111,11 @@ class AppPages {
           name: _Paths.DOWNLOAD,
           page: () => DownloadPage(),
           binding: DownloadBinding(),
+        ),
+        GetPage(
+          name: _Paths.UPLOAD,
+          page: () => UploadPage(),
+          binding: UploadBinding(),
         ),
         GetPage(
           name: _Paths.ABOUT,

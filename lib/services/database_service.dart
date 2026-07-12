@@ -26,6 +26,8 @@ class DatabaseService extends GetxService {
         'CREATE INDEX `index_recent_updated_at` ON `recent` (`updated_at`)');
   });
 
+
+
   // Database migration2to3
   final migration2to3 = Migration(2, 3, (database) async {
     await database.execute(
@@ -36,11 +38,19 @@ class DatabaseService extends GetxService {
         'CREATE INDEX `index_favorite_updated_at` ON `favorite` (`updated_at`)');
   });
 
+  // Database migration3to4
+  final migration3to4 = Migration(3, 4, (database) async {
+    await database.execute(
+        "CREATE TABLE IF NOT EXISTS `upload` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `server_id` INTEGER NOT NULL, `local_path` TEXT NOT NULL, `remote_path` TEXT NOT NULL, `name` TEXT NOT NULL, `type` INTEGER NOT NULL, `size` INTEGER NOT NULL, `status` INTEGER NOT NULL DEFAULT 0, `progress` INTEGER NOT NULL DEFAULT 0, `password` TEXT NOT NULL DEFAULT '', `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)");
+    await database.execute(
+        'CREATE UNIQUE INDEX `index_upload_server_id_path_name` ON `upload` (`server_id`, `remote_path`, `name`)');
+  });
+
   // Init
   Future<DatabaseService> init() async {
     _database = await $FloorXlistDatabase
         .databaseBuilder(name)
-        .addMigrations([migration1to2, migration2to3]).build();
+        .addMigrations([migration1to2, migration2to3, migration3to4]).build();
 
     return this;
   }

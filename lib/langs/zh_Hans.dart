@@ -73,6 +73,7 @@ const Map<String, String> zh_Hans = {
   'toast_switch_success': '切换成功',
   'toast_upload_success': '上传成功',
   'toast_upload_loading': '上传中...',
+  'toast_upload_added': '已添加到上传队列',
   'toast_download_unfinished': '下载未完成',
   'toast_get_user_info_fail': '获取用户信息失败',
   'toast_current_play_file': '当前播放文件',
@@ -183,6 +184,23 @@ const Map<String, String> zh_Hans = {
   'fijkplayer_next': '下一集',
   'fijkplayer_buffering': '正在缓冲...',
   'fijkplayer_retry': '点击重试',
+
+  // 分享上传
+  'share_upload_title': '选择上传位置',
+  'share_upload_button': '上传到此处',
+  'share_upload_no_file': '没有选择文件',
+  'share_upload_file_not_found': '文件不存在',
+
+  // 上传管理
+  'upload_manager': '上传管理',
+  'upload_queued': '排队中',
+  'upload_completed': '已完成',
+  'upload_cancelled': '已取消',
+  'upload_retry': '重试',
+  'setting_upload_empty': '没有上传任务',
+  'setting_upload_clear': '清空已完成',
+  'setting_upload_total': '共',
+  'setting_upload_manager_file': '个任务, 左滑管理',
 
   // 暂无数据
   'no_data': '暂无数据',

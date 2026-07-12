@@ -40,6 +40,7 @@ class Global {
     await Get.putAsync(() => DownloadService().init());
     await Get.putAsync(() => DeviceInfoService().init());
     await Get.putAsync(() => PlayerNotificationService().init());
+    await Get.putAsync(() => UploadService().init());
 
     // 读取设备第一次打开
     final isFirstOpen = Get.find<PreferencesStorage>().isFirstOpen;

@@ -4,3 +4,4 @@ export 'download_dao.dart';
 export 'progress_dao.dart';
 export 'favorite_dao.dart';
 export 'password_manager_dao.dart';
+export 'upload_dao.dart';

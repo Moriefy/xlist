@@ -4,3 +4,4 @@ export 'download_entity.dart';
 export 'progress_entity.dart';
 export 'favorite_entity.dart';
 export 'password_manager_entity.dart';
+export 'upload_entity.dart';

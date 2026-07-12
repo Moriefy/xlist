@@ -7,13 +7,14 @@ import 'package:xlist/database/entity/index.dart';
 
 part 'database.g.dart'; // the generated code will be there
 
-@Database(version: 3, entities: [
+@Database(version: 4, entities: [
   ServerEntity,
   RecentEntity,
   DownloadEntity,
   ProgressEntity,
   FavoriteEntity,
   PasswordManagerEntity,
+  UploadEntity,
 ])
 abstract class XlistDatabase extends FloorDatabase {
   ServerDao get serverDao;
@@ -22,4 +23,5 @@ abstract class XlistDatabase extends FloorDatabase {
   ProgressDao get progressDao;
   FavoriteDao get favoriteDao;
   PasswordManagerDao get passwordManagerDao;
+  UploadDao get uploadDao;
 }

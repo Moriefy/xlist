@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:get/get.dart';
 import 'package:fijkplayer/fijkplayer.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import 'package:xlist/common/index.dart';
 import 'package:xlist/storages/index.dart';
@@ -30,6 +32,28 @@ class SplashController extends GetxController {
     if (layoutType == LayoutType.UNKNOWN) {
       Get.find<PreferencesStorage>().layoutType.val =
           CommonUtils.isPad ? LayoutType.GRID : LayoutType.LIST;
+    }
+
+    // 检查是否有分享 Intent
+    try {
+      final sharedFiles = await ReceiveSharingIntent.getInitialMedia();
+      if (sharedFiles.isNotEmpty) {
+        final file = sharedFiles.first;
+        final filePath = file.path;
+        final fileName = filePath.split(Platform.pathSeparator).last;
+        final fileSize = File(filePath).lengthSync();
+
+        Get.offAndToNamed(Routes.SHARE_UPLOAD, arguments: {
+          'filePath': filePath,
+          'fileName': fileName,
+          'fileSize': fileSize,
+          'mimeType': file.type?.toString() ?? '',
+          'path': '/',
+        });
+        return;
+      }
+    } catch (e) {
+      // No share intent, continue normally
     }
 
     // 跳转到首页

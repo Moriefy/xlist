@@ -10,6 +10,7 @@ import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:xlist/gen/index.dart';
 import 'package:xlist/common/index.dart';
 import 'package:xlist/constants/index.dart';
+import 'package:xlist/routes/app_pages.dart';
 import 'package:xlist/pages/setting/download/index.dart';
 
 class DownloadPage extends GetView<DownloadController> {
@@ -22,6 +23,12 @@ class DownloadPage extends GetView<DownloadController> {
       border: Border.all(width: 0, color: Colors.transparent),
       leading: CommonUtils.backButton,
       middle: Text('download_manager'.tr),
+      trailing: CupertinoButton(
+        padding: EdgeInsets.zero,
+        alignment: Alignment.centerRight,
+        child: Icon(CupertinoIcons.arrow_up_circle, size: CommonUtils.navIconSize),
+        onPressed: () => Get.toNamed(Routes.SETTING_UPLOAD),
+      ),
     );
   }
 

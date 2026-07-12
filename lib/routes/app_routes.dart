@@ -21,6 +21,8 @@ abstract class Routes {
   static const SETTING = _Paths.SETTING;
   static const SETTING_SERVER = _Paths.SETTING + _Paths.SERVER;
   static const SETTING_DOWNLOAD = _Paths.SETTING + _Paths.DOWNLOAD;
+  static const SETTING_UPLOAD = _Paths.SETTING + _Paths.UPLOAD;
+  static const SHARE_UPLOAD = _Paths.SHARE_UPLOAD;
   static const SETTING_ABOUT = _Paths.SETTING + _Paths.ABOUT;
   static const SETTING_RECENT = _Paths.SETTING + _Paths.RECENT;
   static const SETTING_FAVORITE = _Paths.SETTING + _Paths.FAVORITE;
@@ -48,6 +50,8 @@ abstract class _Paths {
   static const SETTING = '/setting';
   static const SERVER = '/server';
   static const DOWNLOAD = '/download';
+  static const UPLOAD = '/upload';
+  static const SHARE_UPLOAD = '/share_upload';
   static const ABOUT = '/about';
   static const RECENT = '/recent';
   static const FAVORITE = '/favorite';
