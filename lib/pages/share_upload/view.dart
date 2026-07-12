@@ -12,6 +12,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:xlist/gen/index.dart';
 import 'package:xlist/common/index.dart';
 import 'package:xlist/constants/index.dart';
+import 'package:xlist/routes/app_pages.dart';
 import 'package:xlist/repositorys/index.dart';
 import 'package:xlist/pages/share_upload/index.dart';
 import 'package:xlist/components/object_list/object_list_item.dart';
@@ -193,10 +194,10 @@ class ShareUploadPage extends GetView<ShareUploadController> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return CupertinoPageScaffold(
-      navigationBar: _buildNavigationBar(),
+    return Scaffold(
+      appBar: _buildNavigationBar(),
       backgroundColor: CommonUtils.backgroundColor,
-      child: SafeArea(
+      body: SafeArea(
         child: EasyRefresh(
           controller: controller.easyRefreshController,
           header: CupertinoHeader(
