@@ -95,7 +95,6 @@ class AppPages {
       name: _Paths.SHARE_UPLOAD,
       page: () => ShareUploadPage(),
       binding: ShareUploadBinding(),
-      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: _Paths.SETTING,
