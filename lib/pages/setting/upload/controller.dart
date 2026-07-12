@@ -5,6 +5,8 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 import 'package:xlist/services/index.dart';
 import 'package:xlist/storages/index.dart';
+import 'package:xlist/routes/app_pages.dart';
+import 'package:xlist/pages/homepage/index.dart';
 import 'package:xlist/database/entity/index.dart';
 
 class UploadController extends GetxController {
@@ -60,6 +62,36 @@ class UploadController extends GetxController {
   /// Reset total size
   void resetTotalSize() {
     totalSize.value = entities.fold<int>(0, (sum, e) => sum + e.size);
+  }
+
+  /// Navigate to the uploaded file's directory and force refresh
+  void goToDirectory(UploadEntity entity) {
+    // Pop all the way back to homepage, then it will auto-refresh
+    Get.until((route) => route.isFirst);
+
+    // Small delay to let the homepage rebuild, then trigger refresh
+    Future.delayed(Duration(milliseconds: 300), () {
+      try {
+        final homepage = Get.find<HomepageController>();
+        // If the upload path is root, just refresh
+        if (entity.remotePath == '/' || entity.remotePath.isEmpty) {
+          homepage.getObjectList(refresh: true);
+        } else {
+          // Navigate into the subdirectory
+          Get.toNamed(
+            '${Routes.DETAIL}${entity.remotePath}',
+            arguments: {
+              'path': entity.remotePath.endsWith('/')
+                  ? entity.remotePath.substring(0, entity.remotePath.length - 1)
+                  : entity.remotePath,
+              'name': '',
+            },
+          );
+        }
+      } catch (e) {
+        // Homepage controller not found, just go back
+      }
+    });
   }
 
   /// Pause upload
