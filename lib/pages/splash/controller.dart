@@ -21,12 +21,10 @@ class SplashController extends GetxController {
   @override
   void onReady() {
     super.onReady();
-
-    // Wait for engine and method channel to be ready
-    Timer(const Duration(milliseconds: 500), () => complete());
+    _init();
   }
 
-  void complete() async {
+  Future<void> _init() async {
     if (!CommonUtils.isPad) await FijkPlugin.setOrientationPortrait();
 
     // 布局方式
@@ -36,30 +34,43 @@ class SplashController extends GetxController {
           CommonUtils.isPad ? LayoutType.GRID : LayoutType.LIST;
     }
 
-    // 检查是否有分享 Intent
-    try {
-      final result = await _channel.invokeMethod('getSharedFile');
-      if (result != null && result is Map) {
-        final filePath = result['filePath'] as String? ?? '';
-        final fileName = result['fileName'] as String? ?? '';
-        final fileSize = result['fileSize'] as int? ?? 0;
-
-        if (filePath.isNotEmpty && File(filePath).existsSync()) {
-          Get.offAndToNamed(Routes.SHARE_UPLOAD, arguments: {
-            'filePath': filePath,
-            'fileName': fileName,
-            'fileSize': fileSize,
-            'mimeType': '',
-            'path': '/',
-          });
-          return;
+    // Wait for engine to be ready with retry
+    Map? sharedData;
+    for (int i = 0; i < 5; i++) {
+      try {
+        final result = await _channel.invokeMethod('getSharedFile')
+            .timeout(Duration(seconds: 2));
+        if (result != null && result is Map) {
+          sharedData = result;
+          break;
         }
+        // null means no shared file, stop retrying
+        break;
+      } catch (e) {
+        // Timeout or error, retry after delay
+        await Future.delayed(Duration(milliseconds: 300));
       }
-    } catch (e) {
-      // No share intent, continue normally
     }
 
-    // 跳转到首页
+    // Check if we got shared file data
+    if (sharedData != null) {
+      final filePath = sharedData['filePath'] as String? ?? '';
+      final fileName = sharedData['fileName'] as String? ?? '';
+      final fileSize = sharedData['fileSize'] as int? ?? 0;
+
+      if (filePath.isNotEmpty && File(filePath).existsSync()) {
+        Get.offAndToNamed(Routes.SHARE_UPLOAD, arguments: {
+          'filePath': filePath,
+          'fileName': fileName,
+          'fileSize': fileSize,
+          'mimeType': '',
+          'path': '/',
+        });
+        return;
+      }
+    }
+
+    // No shared file, go to homepage
     Get.offAndToNamed(Routes.HOMEPAGE);
   }
 }
