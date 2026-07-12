@@ -49,7 +49,7 @@ class UploadPage extends GetView<UploadController> {
       case UploadStatus.UPLOADING:
         return '$progress%';
       case UploadStatus.PAUSED:
-        return 'paused'.tr;
+        return '${'paused'.tr} $progress%';
       case UploadStatus.COMPLETED:
         return 'upload_completed'.tr;
       case UploadStatus.FAILED:
@@ -73,9 +73,43 @@ class UploadPage extends GetView<UploadController> {
         return CupertinoColors.systemRed;
       case UploadStatus.PAUSED:
         return CupertinoColors.systemOrange;
+      case UploadStatus.QUEUED:
+        return CupertinoColors.systemGrey;
       default:
         return Colors.grey;
     }
+  }
+
+  /// 构建进度条（所有状态都显示）
+  Widget _buildProgressBar(int status, int progress) {
+    final color = _statusColor(status);
+    double value;
+    switch (status) {
+      case UploadStatus.UPLOADING:
+        value = progress / 100.0;
+        break;
+      case UploadStatus.COMPLETED:
+        value = 1.0;
+        break;
+      case UploadStatus.PAUSED:
+        value = progress / 100.0;
+        break;
+      case UploadStatus.QUEUED:
+        value = 0.0;
+        break;
+      default:
+        value = 0.0;
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10.r),
+      child: LinearProgressIndicator(
+        value: value,
+        backgroundColor: Colors.grey.withOpacity(0.15),
+        valueColor: AlwaysStoppedAnimation<Color>(color),
+        minHeight: 8,
+      ),
+    );
   }
 
   /// 列表项
@@ -97,7 +131,7 @@ class UploadPage extends GetView<UploadController> {
           : EdgeInsets.symmetric(horizontal: 50.w).copyWith(bottom: 30.h),
       children: [
         Container(
-          height: CommonUtils.isPad ? 80 : 170.h,
+          height: CommonUtils.isPad ? 90 : 190.h,
           width: double.infinity,
           child: Slidable(
             // 右滑：暂停 / 恢复 / 取消
@@ -117,69 +151,70 @@ class UploadPage extends GetView<UploadController> {
             ),
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
+              // 已完成的文件点击跳转到目录
+              onTap: entity.status == UploadStatus.COMPLETED
+                  ? () => controller.goToDirectory(entity)
+                  : null,
               child: Row(
                 children: [
                   SizedBox(width: 30.w),
                   _buildIcon(entity.type, entity.name),
                   SizedBox(width: 20.w),
-                  Container(
-                    width: 650.w,
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(height: CommonUtils.isPad ? 15 : 30.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                entity.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Get.textTheme.bodyLarge?.copyWith(
+                                  color: entity.status == UploadStatus.COMPLETED
+                                      ? CupertinoColors.activeBlue
+                                      : null,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              statusStr,
+                              style: Get.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: statusClr,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 6.h),
                         Text(
-                          entity.name,
+                          '${CommonUtils.formatFileSize(entity.size)} → ${path.isEmpty ? '/' : path}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Get.textTheme.bodyLarge,
+                          style: Get.textTheme.bodySmall?.copyWith(
+                            color: CupertinoColors.systemGrey,
+                          ),
                         ),
-                        SizedBox(height: 7.h),
-                        Text(
-                          '${CommonUtils.formatFileSize(entity.size)}${path.isNotEmpty ? ' - $path' : ''}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Get.textTheme.bodySmall,
-                        ),
+                        SizedBox(height: 8.h),
+                        // 所有状态都显示进度条
+                        _buildProgressBar(entity.status, entity.progress),
                       ],
                     ),
                   ),
-                  SizedBox(width: 10.w),
-                  // 进度条 + 状态
-                  entity.status == UploadStatus.UPLOADING
-                      ? Container(
-                          width: 120.w,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                statusStr,
-                                style: Get.textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: statusClr,
-                                ),
-                              ),
-                              SizedBox(height: 10.h),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10.r),
-                                child: LinearProgressIndicator(
-                                  value: entity.progress / 100.0,
-                                  backgroundColor: Colors.grey.withOpacity(0.2),
-                                  valueColor: AlwaysStoppedAnimation<Color>(statusClr),
-                                  minHeight: 6,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : Text(
-                          statusStr,
-                          style: Get.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: statusClr,
-                          ),
-                        ),
                   SizedBox(width: 20.w),
+                  // 已完成的文件显示箭头
+                  if (entity.status == UploadStatus.COMPLETED)
+                    Padding(
+                      padding: EdgeInsets.only(right: 20.w),
+                      child: Icon(
+                        CupertinoIcons.chevron_right,
+                        size: 40.sp,
+                        color: CupertinoColors.systemGrey,
+                      ),
+                    ),
                 ],
               ),
             ),
