@@ -11,17 +11,22 @@ import java.io.FileOutputStream
 
 class MainActivity: AudioServiceActivity() {
     private val CHANNEL = "io.xlist/share"
+    private var channel: MethodChannel? = null
+
+    // Cached shared file data
     private var sharedFilePath: String? = null
     private var sharedFileName: String? = null
     private var sharedFileSize: Long = 0
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-        // Handle share intent BEFORE starting Flutter engine
+        // 1. Process the launch intent BEFORE engine starts
         handleShareIntent(intent)
 
-        // Register method channel BEFORE super (so it's ready when Dart calls)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        // 2. Set up bidirectional method channel BEFORE super
+        channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        channel?.setMethodCallHandler { call, result ->
             when (call.method) {
+                // Flutter → Native: get cached shared file
                 "getSharedFile" -> {
                     if (sharedFilePath != null) {
                         val map = HashMap<String, Any>()
@@ -41,14 +46,19 @@ class MainActivity: AudioServiceActivity() {
             }
         }
 
+        // 3. Start Flutter engine
         super.configureFlutterEngine(flutterEngine)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // App is already running, user shared a new file
         handleShareIntent(intent)
+        // Push data directly to Dart (bidirectional)
+        sendSharedDataToFlutter()
     }
 
+    /// Process ACTION_SEND intent: copy shared file to cache
     private fun handleShareIntent(intent: Intent?) {
         if (intent == null) return
         if (intent.action != Intent.ACTION_SEND && intent.action != Intent.ACTION_SEND_MULTIPLE) return
@@ -56,7 +66,6 @@ class MainActivity: AudioServiceActivity() {
         val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM) ?: return
 
         try {
-            // Copy content URI to a temporary file
             val inputStream = contentResolver.openInputStream(uri) ?: return
             val fileName = getFileName(uri)
             val cacheDir = File(cacheDir, "shared_files")
@@ -74,6 +83,27 @@ class MainActivity: AudioServiceActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    /// Native → Dart: push shared file data (for warm start / onNewIntent)
+    private fun sendSharedDataToFlutter() {
+        if (sharedFilePath == null) return
+
+        val map = HashMap<String, Any>()
+        map["filePath"] = sharedFilePath!!
+        map["fileName"] = sharedFileName ?: ""
+        map["fileSize"] = sharedFileSize
+
+        try {
+            channel?.invokeMethod("onSharedFile", map)
+        } catch (e: Exception) {
+            // Channel not ready, data stays cached for Dart to poll later
+        }
+
+        // Clear after sending
+        sharedFilePath = null
+        sharedFileName = null
+        sharedFileSize = 0
     }
 
     private fun getFileName(uri: Uri): String {
